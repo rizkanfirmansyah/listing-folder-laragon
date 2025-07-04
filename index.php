@@ -107,19 +107,20 @@
     }
 
     // Fungsi untuk menampilkan folder dan file secara rekursif dengan collapse
-    function renderFolderTree($dir, $parentId = '', $level = 0) {
+    function renderFolderTree($dir, $parentId = '', $level = 0, $relativePath = '') {
       static $folderIndex = 0;
       $items = @scandir($dir);
       if (!$items) return;
       $id = $parentId . 'f' . $folderIndex++;
       $folderName = basename($dir);
+      $currentRelativePath = ltrim($relativePath . '/' . $folderName, '/');
       list($totalFiles, $totalFolders, $totalSize) = getFolderStats($dir);
       $sizeStr = formatSize($totalSize);
       echo '<div class="notion-folder">';
       echo '<div class="notion-folder-header" data-toggle="collapse" href="#collapse'.$id.'" role="button" aria-expanded="false" aria-controls="collapse'.$id.'">';
       echo '<span class="chevron">▶</span> <span style="font-size:1.2em;">📁</span> ' . htmlspecialchars($folderName);
       echo '<span class="notion-folder-stats">('.$totalFolders.' folders, '.$totalFiles.' files, '.$sizeStr.')</span>';
-      echo '<a class="notion-folder-link" href="'.htmlspecialchars($folderName).'" target="_blank">Open</a>';
+      echo '<a class="notion-folder-link" href="/' . htmlspecialchars($currentRelativePath) . '" target="_blank">Open</a>';
       echo '</div>';
       echo '<div class="collapse notion-folder-content" id="collapse'.$id.'">';
       echo '<ul style="list-style:none;padding-left:0;">';
@@ -127,7 +128,7 @@
         if ($item === '.' || $item === '..') continue;
         $path = $dir . DIRECTORY_SEPARATOR . $item;
         if (is_dir($path)) {
-          renderFolderTree($path, $id, $level+1);
+          renderFolderTree($path, $id, $level+1, $currentRelativePath);
         } else {
           $size = formatSize(filesize($path));
           echo '<li class="notion-file"><span class="icon">📄</span>' . htmlspecialchars($item) . ' <span class="notion-folder-stats">('.$size.')</span></li>';
@@ -159,7 +160,7 @@
     $folderPath = "C:/laragon/www/";
     $folders = array_filter(glob($folderPath . '*'), 'is_dir');
     foreach ($folders as $folder) {
-      renderFolderTree($folder);
+      renderFolderTree($folder, '', 0, '');
     }
     ?>
   </div>
